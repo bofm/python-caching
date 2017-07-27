@@ -57,28 +57,18 @@ except KeyError:
     cache[1] = result
     assert 1 in cache
     assert cache[1] == result
-
-# Non-Pythonic usage
-
-def myapp():
-    ...
-    value = 123
-    cache_key = 'some_func_%s' % value
-    try:
-        result = cache.get(cache_key)
-    except CacheMiss:
-        result = some_func(value)
-        cache.put(cache_key, value)
+    assert cache.get(1, None) == result
+    assert cache.get(2, None) is None
 
 ```
 
 # Features
 
-- [ ] Memory and file based cache.
-- [ ] TTL and maxsize.
-- [ ] Works with `*args`, `**kwargs`.
-- [ ] Works with mutable function arguments of the following types: `dict`, `list`, `set`.
+- [x] Memory and file based cache.
+- [x] TTL and maxsize.
+- [x] Works with `*args`, `**kwargs`.
+- [x] Works with mutable function arguments of the following types: `dict`, `list`, `set`.
+- [ ] LRS (least recently stored), LRU and LFU cache.
 - [ ] Multiprocessing- and thread-safe.
 - [ ] Customizable cache key function.
-- [ ] LRU or LFU cache.
 - [ ] Pluggable external caching backends (see Redis example).

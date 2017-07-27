@@ -71,4 +71,5 @@ target/
 Dockerfile
 docker-compose.yml
 test*/deps.json
-
+Pipfile
+Pipfile.lock
