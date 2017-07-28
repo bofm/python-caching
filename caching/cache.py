@@ -67,6 +67,7 @@ class Cache:
         del self.storage[self.encode(key)]
 
     def __contains__(self, key):
+        global MISS
         return self.get(key, MISS) is not MISS
 
     def get(self, key, default=None):
