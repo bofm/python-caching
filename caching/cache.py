@@ -25,6 +25,8 @@ class Cache:
             maxsize=maxsize,
         )
         self.make_key = key or make_key
+        if self.typed:
+            self.make_key = self._make_key_typed
 
     def __repr__(self):
         return (
@@ -32,32 +34,33 @@ class Cache:
             f"({', '.join(f'{k}={repr(v)}' for k,v in self.params.items())})"
         )
 
+    def _decorator(self, fn):
+        if not callable(fn):
+            raise TypeError(f'{fn} is not callable')
+
+        key_prefix = _function_name(fn)
+        make_key_ = self.typed and self._make_key_typed or self.make_key
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            global MISS
+            nonlocal self, key_prefix, make_key_, fn
+            key = (key_prefix, make_key_(*args, **kwargs))
+            # Smth unique and is needed here.
+            # None is not an option because fn may return None. So MISS is used
+            res = self.get(key, MISS)
+            if res is MISS:
+                res = self[key] = fn(*args, **kwargs)
+            return res
+        return wrapper
+
     def __call__(self, fn=None, **kwargs):
-        def decorator(fn):
-            if not callable(fn):
-                raise TypeError(f'{fn} is not callable')
-
-            key_prefix = self.make_key_prefix(fn)
-
-            @wraps(fn)
-            def wrapper(*args, **kwargs):
-                global MISS
-                key = self.make_key(self.typed, key_prefix, *args, **kwargs)
-                # Smth unique and is needed here.
-                # None is not an option because fn may return None. So MISS is used.
-                res = self.get(key, MISS)
-                if res is MISS:
-                    res = self[key] = fn(*args, **kwargs)
-                return res
-
-            return wrapper
-
         if fn is None and kwargs:
             return self.copy(**kwargs)(fn)
         elif callable(fn) and not kwargs:
-            return decorator(fn)
+            return self._decorator(fn)
         else:
-            return decorator
+            return self._decorator
 
     def __getitem__(self, key):
         return self.decode(self.storage[self.encode(key)])
@@ -87,8 +90,8 @@ class Cache:
     def copy(self, **kwargs):
         return self.__class__(**self.params, **kwargs)
 
-    def make_key_prefix(self, fn):
-        return function_name(fn)
+    def _make_key_typed(self, *args, **kwargs):
+        return _type_names(args, kwargs), self.make_key(*args, **kwargs)
 
     def encode(self, obj):
         return pickle.dumps(obj)
@@ -106,21 +109,22 @@ class Cache:
         self.storage.remove()
 
 
-def make_key(typed=False, *args, **kwargs):
-    kwargs = sorted(kwargs.items())
-    if typed:
-        args = tuple((a, type_name(a)) for a in args)
-        kwargs = tuple(((k, type_name(k)), (v, type_name(v)))
-                       for k, v in kwargs)
-    return f'{args}{kwargs}'
+def make_key(*args, **kwargs):
+    return pickle.dumps((args, sorted(kwargs.items())))
 
 
-def type_name(obj):
+def _type_names(args, kwargs):
+    arg_type_names = *map(_type_name, args),
+    kwarg_type_names = *((*map(_type_name, kv),) for kv in sorted(kwargs.items())),
+    return arg_type_names, kwarg_type_names
+
+
+def _type_name(obj):
     klass = type(obj)
     return f'{klass.__module__}.{klass.__qualname__}'
 
 
-def function_name(fn):
+def _function_name(fn):
     return f'{fn.__module__}.{fn.__qualname__}'
 
 
