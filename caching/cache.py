@@ -10,7 +10,7 @@ MISS = object()
 
 class Cache:
 
-    def __init__(self, *, maxsize=1024, ttl=-1, filepath=None, typed=False, **kwargs):
+    def __init__(self, *, maxsize=1024, ttl=-1, filepath=None, typed=False, key=None, **kwargs):
         self.params = OrderedDict(
             maxsize=maxsize,
             ttl=ttl,
@@ -24,7 +24,7 @@ class Cache:
             ttl=ttl,
             maxsize=maxsize,
         )
-        self.make_key = make_key
+        self.make_key = key or make_key
 
     def __repr__(self):
         return (
