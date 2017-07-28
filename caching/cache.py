@@ -2,7 +2,7 @@ import pickle
 from collections import OrderedDict
 from functools import wraps
 
-from caching.storage import SQLiteStorage
+from .storage import SQLiteStorage
 
 
 MISS = object()
