@@ -116,7 +116,7 @@ class Cache:
         self.storage.close()
 
     def copy(self, **kwargs):
-        return self.__class__(**self.params, **kwargs)
+        return self.__class__(**{**self.params, **kwargs})
 
     def _make_key_typed(self, *args, **kwargs):
         return _type_names(args, kwargs), self.make_key(*args, **kwargs)
