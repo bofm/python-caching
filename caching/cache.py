@@ -34,6 +34,8 @@ class Cache:
 
     def __call__(self, fn=None, **kwargs):
         def decorator(fn):
+            if not callable(fn):
+                raise TypeError(f'{fn} is not callable')
 
             key_prefix = self.make_key_prefix(fn)
 
