@@ -14,7 +14,8 @@ def make_key(*args, **kwargs):
 
 def _type_names(args, kwargs):
     arg_type_names = *map(_type_name, args),
-    kwarg_type_names = *((*map(_type_name, kv),) for kv in sorted(kwargs.items())),
+    kwarg_type_names = *((*map(_type_name, kv),)
+                         for kv in sorted(kwargs.items())),
     return arg_type_names, kwarg_type_names
 
 
