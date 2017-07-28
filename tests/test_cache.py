@@ -19,7 +19,7 @@ def test_repr():
     assert repr(c) == expected
 
 
-@pytest.mark.parametrize('key, value', [
+keys_and_values = [
     (1, 'one'),
     (1, 2),
     ('1', 2),
@@ -27,12 +27,19 @@ def test_repr():
     (1, 0.1),
     (0.1, 1),
     ('a', 'b'),
-    ('a' * 9999, 'b' * 9999),
+    ('a' * 999999, 'b' * 999999),
     ([1, 'a'], {'b': 'c'}),
     ({'b': 'c'}, [1, 'a']),
     ({'b': 'c'}, {1, None, '555'}),
     ({'b', 'c'}, (1, 'z')),
-])
+]
+test_names = [
+    None if len(str((k,v))) < 30 else f'{str(k)[:10]}_{str(v)[:10]}'
+    for k, v in keys_and_values
+]
+
+
+@pytest.mark.parametrize('key, value', keys_and_values, ids=test_names)
 def test_cache_set_get_in_clear_del(cache, key, value):
     with pytest.raises(KeyError):
         cache[key]
