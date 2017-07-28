@@ -135,9 +135,7 @@ def test_items(storage):
     assert storage[b'1'] == b'one'
     assert storage[b'2'] == b'two'
 
-    items = []
-    for item in storage.items():
-        items.append(item)
+    items = [item for item in storage.items()]
 
     assert items == [
         (b'1',  b'one'),
