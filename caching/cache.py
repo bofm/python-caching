@@ -46,7 +46,7 @@ class Cache:
             global MISS
             nonlocal self, key_prefix, make_key_, fn
             key = (key_prefix, make_key_(*args, **kwargs))
-            # Smth unique and is needed here.
+            # Something unique and is needed here.
             # None is not an option because fn may return None. So MISS is used
             res = self.get(key, MISS)
             if res is MISS:
