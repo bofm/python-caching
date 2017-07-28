@@ -4,7 +4,7 @@ import time
 import pytest
 
 from caching import Cache
-from caching.cache import _type_name, _function_name
+from caching.cache import _type_name, _function_name, _type_names
 
 
 @pytest.fixture(params=[False, True], ids=['memory', 'file'])
@@ -35,7 +35,7 @@ keys_and_values = [
     ({'b', 'c'}, (1, 'z')),
 ]
 test_names = [
-    None if len(str((k,v))) < 30 else f'{str(k)[:10]}_{str(v)[:10]}'
+    None if len(str((k, v))) < 30 else f'{str(k)[:10]}_{str(v)[:10]}'
     for k, v in keys_and_values
 ]
 
@@ -171,6 +171,17 @@ def test_make_key():
 ])
 def test__type_name(obj, expected):
     assert _type_name(obj) == expected
+
+
+def test__type_names():
+    def test(expected, *args, **kwargs):
+        assert _type_names(args, kwargs) == expected
+
+    expected = (
+        (('builtins.str'), ('builtins.int'),),
+        ('builtins.list', 'builtins.int'),
+    )
+    test(expected, 'a', 1, one=1, l=[1, 2])
 
 
 @pytest.mark.parametrize('obj, expected', [
