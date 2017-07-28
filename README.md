@@ -5,7 +5,7 @@
 
 [![Build Status](https://travis-ci.org/bofm/python-caching.svg?branch=master)](https://travis-ci.org/bofm/python-caching) [![Coverage Status](https://coveralls.io/repos/github/bofm/python-caching/badge.svg)](https://coveralls.io/github/bofm/python-caching)
 
-Python utils and decorators for cаching.
+Python utils and decorators for cаching with TTL, maxsize and file-based storage.
 
 # Installation
 
