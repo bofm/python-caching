@@ -39,7 +39,10 @@ class Cache:
 
             @wraps(fn)
             def wrapper(*args, **kwargs):
+                global MISS
                 key = self.make_key(self.typed, key_prefix, *args, **kwargs)
+                # Smth unique and is needed here.
+                # None is not an option because fn may return None. So MISS is used.
                 res = self.get(key, MISS)
                 if res is MISS:
                     res = self[key] = fn(*args, **kwargs)
