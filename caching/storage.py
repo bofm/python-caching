@@ -11,25 +11,25 @@ class CacheStorageBase:
         self.ttl = ttl
 
     def __setitem__(self, key, value) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def __getitem__(self, key) -> bytes:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def __delitem__(self, key) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def get(self, key, default=None) -> Union[bytes, None]:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def clear(self) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def remove(self) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def items(self) -> Generator[Tuple[bytes, bytes], None, None]:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class SQLiteStorage(CacheStorageBase):
