@@ -85,7 +85,7 @@ class Cache:
         self.storage.close()
 
     def copy(self, **kwargs):
-        return self.__class__(**{**self.params, **kwargs})
+        return self.__class__(**self.params, **kwargs)
 
     def make_key_prefix(self, fn):
         return function_name(fn)
@@ -121,7 +121,7 @@ def type_name(obj):
 
 
 def function_name(fn):
-    return  f'{fn.__module__}.{fn.__qualname__}'
+    return f'{fn.__module__}.{fn.__qualname__}'
 
 
 cache = Cache()
