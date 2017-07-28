@@ -47,12 +47,12 @@ class Cache:
         )
         self.typed = typed
         self.params.update(kwargs)
+        self.make_key = key
         self.storage = SQLiteStorage(
             filepath=filepath or ':memory:',
             ttl=ttl,
             maxsize=maxsize,
         )
-        self.make_key = key
 
     def __repr__(self):
         return (
