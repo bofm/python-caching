@@ -27,6 +27,7 @@ def long_running_function(a, b, c=None, *kwargs):
 from caching import Cache
 
 # Set default parameters
+
 cache = Cache(filepath='/tmp/mycache', ttl=3600, maxsize=1024, typed=True)
 
 # Use default parameters
@@ -50,7 +51,7 @@ def cache_key(x):
 def toupper(a):
     return str(a).upper()
 
-# Using cache as a key-value storage
+# Using cache as a key-value store
 
 try:
     result = cache[1]
