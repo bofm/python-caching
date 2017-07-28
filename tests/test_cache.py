@@ -210,8 +210,3 @@ def test__type_names():
 ])
 def test__function_name(obj, expected):
     assert _function_name(obj) == expected
-
-
-def test_key_function_validation(cache):
-    with pytest.raises(TypeError):
-        cache(lambda: 0)
