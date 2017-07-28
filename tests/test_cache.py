@@ -198,7 +198,7 @@ def test__type_names():
         assert _type_names(args, kwargs) == expected
 
     expected = (
-        (('builtins.str'), ('builtins.int'),),
+        ('builtins.str', 'builtins.int',),
         ('builtins.list', 'builtins.int'),
     )
     test(expected, 'a', 1, one=1, l=[1, 2])
