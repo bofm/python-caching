@@ -8,9 +8,37 @@ from .storage import SQLiteStorage
 MISS = object()
 
 
+def make_key(*args, **kwargs):
+    return pickle.dumps((args, sorted(kwargs.items())))
+
+
+def _type_names(args, kwargs):
+    arg_type_names = *map(_type_name, args),
+    kwarg_type_names = *((*map(_type_name, kv),) for kv in sorted(kwargs.items())),
+    return arg_type_names, kwarg_type_names
+
+
+def _type_name(obj):
+    klass = type(obj)
+    return f'{klass.__module__}.{klass.__qualname__}'
+
+
+def _function_name(fn):
+    return f'{fn.__module__}.{fn.__qualname__}'
+
+
 class Cache:
 
-    def __init__(self, *, maxsize=1024, ttl=-1, filepath=None, typed=False, key=None, **kwargs):
+    def __init__(
+        self,
+        *,
+        maxsize=1024,
+        ttl=-1,
+        filepath=None,
+        typed=False,
+        key=make_key,
+        **kwargs
+    ):
         self.params = OrderedDict(
             maxsize=maxsize,
             ttl=ttl,
@@ -24,7 +52,7 @@ class Cache:
             ttl=ttl,
             maxsize=maxsize,
         )
-        self.make_key = key or make_key
+        self.make_key = key
         if self.typed:
             self.make_key = self._make_key_typed
 
@@ -107,25 +135,6 @@ class Cache:
 
     def remove(self):
         self.storage.remove()
-
-
-def make_key(*args, **kwargs):
-    return pickle.dumps((args, sorted(kwargs.items())))
-
-
-def _type_names(args, kwargs):
-    arg_type_names = *map(_type_name, args),
-    kwarg_type_names = *((*map(_type_name, kv),) for kv in sorted(kwargs.items())),
-    return arg_type_names, kwarg_type_names
-
-
-def _type_name(obj):
-    klass = type(obj)
-    return f'{klass.__module__}.{klass.__qualname__}'
-
-
-def _function_name(fn):
-    return f'{fn.__module__}.{fn.__qualname__}'
 
 
 cache = Cache()
