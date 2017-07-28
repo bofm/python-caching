@@ -44,9 +44,10 @@ class Cache:
             ttl=ttl,
             filepath=filepath,
             typed=typed,
+            key=key,
+            **kwargs
         )
         self.typed = typed
-        self.params.update(kwargs)
         self.make_key = key
         self.storage = SQLiteStorage(
             filepath=filepath or ':memory:',
