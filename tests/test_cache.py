@@ -4,7 +4,7 @@ import time
 import pytest
 
 from caching import Cache
-from caching.cache import _type_name, _function_name, _type_names
+from caching.cache import _type_name, _function_name, _type_names, make_key
 
 
 @pytest.fixture(params=[False, True], ids=['memory', 'file'])
@@ -146,9 +146,29 @@ def test_remove(tempdirpath, cache):
     assert os.listdir(tempdirpath) == []
 
 
-@pytest.mark.skip
-def test_typed():
-    assert 0
+def test_typed(cache):
+    assert 1.0 == 1
+    assert make_key(1.0) == make_key(1)
+    assert _type_name(1.0) != _type_name(1)
+    assert _type_names((1.0,), {}) != _type_names((1,), {})
+
+    call_count = 0
+
+    @cache
+    def func(a):
+        nonlocal call_count
+        call_count += 1
+        return a
+
+    assert call_count == 0
+    assert func(1) == 1
+    assert call_count == 1
+    assert func(1) == 1
+    assert call_count == 1
+    assert func(1.0) == 1.0
+    assert call_count == 2
+    assert isinstance(func(1.0), float)
+    assert call_count == 2
 
 
 @pytest.mark.skip

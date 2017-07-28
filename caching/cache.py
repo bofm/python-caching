@@ -9,7 +9,7 @@ MISS = object()
 
 
 def make_key(*args, **kwargs):
-    return pickle.dumps((args, sorted(kwargs.items())))
+    return args, sorted(kwargs.items())
 
 
 def _type_names(args, kwargs):
@@ -53,8 +53,6 @@ class Cache:
             maxsize=maxsize,
         )
         self.make_key = key
-        if self.typed:
-            self.make_key = self._make_key_typed
 
     def __repr__(self):
         return (
