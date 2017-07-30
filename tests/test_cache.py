@@ -106,9 +106,39 @@ def test_function_decorator_noargs(cache):
     assert values() == expected_values
 
 
-@pytest.mark.skip
 def test_function_decorator_with_args(cache):
-    assert 0
+    call_count = 0
+
+    @cache(max_size=-1, ttl=-1)
+    def pow(a, b):
+        time.sleep(0.001)  # to make timestamp different in each call
+        nonlocal call_count
+        call_count += 1
+        return a**b
+
+    def values():
+        c = pow._cache
+        return list(c.decode(v) for k, v in c.storage.items())
+
+    assert call_count == 0
+
+    assert pow(2, 3) == 8
+    assert call_count == 1
+    expected_values = [8]
+    assert values() == expected_values
+
+    assert pow(2, 3) == 8
+    assert call_count == 1
+    assert values() == expected_values
+
+    assert pow(2, 2) == 4
+    assert call_count == 2
+    expected_values = [8, 4]
+    assert values() == expected_values
+
+    assert pow(2, 2) == 4
+    assert call_count == 2
+    assert values() == expected_values
 
 
 @pytest.mark.skip

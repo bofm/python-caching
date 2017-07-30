@@ -90,6 +90,7 @@ class Cache:
             if res is MISS:
                 res = self[key] = fn(*args, **kwargs)
             return res
+        wrapper._cache = self
         return wrapper
 
     def __call__(self, fn=None, **kwargs):
