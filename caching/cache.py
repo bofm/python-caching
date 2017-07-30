@@ -4,12 +4,23 @@ from functools import wraps
 
 from .storage import SQLiteStorage
 
-
 MISS = object()
+
+# Something unique and equal to itself after pickling-unpickling
+# and unlikely to appear in args
+KWARGS_MARK = '☭'
 
 
 def make_key(*args, **kwargs):
-    return args, sorted(kwargs.items())
+    global KWARGS_MARK
+    if kwargs:
+        return (
+            *args,
+            KWARGS_MARK,
+            *(x for kv in sorted(kwargs.items()) for x in kv),
+        )
+    else:
+        return args
 
 
 def _type_names(args, kwargs):
@@ -72,7 +83,7 @@ class Cache:
         def wrapper(*args, **kwargs):
             global MISS
             nonlocal self, key_prefix, make_key_, fn
-            key = (key_prefix, make_key_(*args, **kwargs))
+            key = (key_prefix, *make_key_(*args, **kwargs))
             # Something unique and is needed here.
             # None is not an option because fn may return None. So MISS is used
             res = self.get(key, MISS)

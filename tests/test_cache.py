@@ -4,7 +4,8 @@ import time
 import pytest
 
 from caching import Cache
-from caching.cache import _type_name, _function_name, _type_names, make_key
+from caching.cache import _type_name, _function_name, _type_names, make_key, \
+    KWARGS_MARK
 
 
 @pytest.fixture(params=[False, True], ids=['memory', 'file'])
@@ -172,9 +173,12 @@ def test_typed(cache):
     assert call_count == 2
 
 
-@pytest.mark.skip
 def test_make_key():
-    assert 0
+    assert make_key(1) == (1,)
+    assert make_key() == ()
+    assert make_key(1, 2) == (1, 2)
+    assert make_key(one=1) == (KWARGS_MARK, 'one', 1)
+    assert make_key(1, 2, one=1) == (1, 2, KWARGS_MARK, 'one', 1)
 
 
 @pytest.mark.parametrize('obj, expected', [
