@@ -249,3 +249,8 @@ def test__type_names():
 ])
 def test__function_name(obj, expected):
     assert _function_name(obj) == expected
+
+
+def test_fn_not_callable(cache):
+    with pytest.raises(TypeError):
+        cache()(1)
