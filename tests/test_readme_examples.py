@@ -1,5 +1,13 @@
 def test_readme(tempdirpath):
-    from caching import Cache
+    from caching import Cache, cache
+
+    # Simple usage
+
+    @cache(ttl=60, maxsize=128, filepath='/tmp/mycache')
+    def long_running_function(a, b, *args, c=None, **kwargs):
+        pass
+
+    long_running_function(1, 2, 3, 5, z=1)
 
     # Set default parameters
 

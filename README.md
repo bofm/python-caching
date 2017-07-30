@@ -17,7 +17,7 @@ Python utils and decorators for cаching with TTL, maxsize and file-based storag
 from caching import cache
 
 @cache(ttl=60, maxsize=128, filepath='/tmp/mycache')
-def long_running_function(a, b, c=None, *kwargs):
+def long_running_function(a, b, *args, c=None, **kwargs):
     pass
 ```
 
