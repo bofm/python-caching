@@ -6,19 +6,10 @@ from .storage import SQLiteStorage
 
 MISS = object()
 
-# Something unique and equal to itself after pickling-unpickling
-# and unlikely to appear in args
-KWARGS_MARK = '☭'
-
 
 def make_key(*args, **kwargs):
-    global KWARGS_MARK
     if kwargs:
-        return (
-            *args,
-            KWARGS_MARK,
-            *(x for kv in sorted(kwargs.items()) for x in kv),
-        )
+        return (args, *(x for kv in sorted(kwargs.items()) for x in kv))
     else:
         return args
 
