@@ -33,6 +33,7 @@ class CacheStorageBase:
 
 
 class SQLiteStorage(CacheStorageBase):
+    SQLITE_TIMESTAMP = "(julianday('now') - 2440587.5)*86400.0"
 
     def __init__(self, *, filepath, ttl, maxsize):
         super(SQLiteStorage, self).__init__(ttl=ttl, maxsize=maxsize)
@@ -40,6 +41,12 @@ class SQLiteStorage(CacheStorageBase):
         self.db = sqlite3.connect(filepath, isolation_level='DEFERRED')
         self.init_db()
         self.nothing = object()
+
+        if self.ttl > 0:
+            ttl_filter = f' AND ({self.SQLITE_TIMESTAMP} - ts) <= {self.ttl}'
+        else:
+            ttl_filter = ''
+        self.sql_get = f'SELECT value FROM cache WHERE key = ?{ttl_filter}'
 
     def close(self):
         self.db.close()
@@ -83,17 +90,18 @@ class SQLiteStorage(CacheStorageBase):
 
     def get(self, key, default=None):
         rows = self.db.execute(
-            'SELECT value FROM cache WHERE key = ?',
-            (key,)
+            self.sql_get,
+            (key,),
         ).fetchall()
         return rows[0][0] if rows else default
 
     def init_db(self):
-        sqlite_ts = "(julianday('now') - 2440587.5)*86400.0"
         after_insert_actions = []
         if self.ttl > 0:
             after_insert_actions.append(
-                f'  DELETE FROM cache WHERE ({sqlite_ts} - ts) > {self.ttl};')
+                '  DELETE FROM cache WHERE '
+                f'({self.SQLITE_TIMESTAMP} - ts) > {self.ttl};'
+            )
         if self.maxsize > 0:
             after_insert_actions.append(
                 '  DELETE FROM cache WHERE key in ('

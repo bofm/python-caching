@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import time
 
 from caching import SQLiteStorage
 
@@ -46,19 +47,20 @@ def test_set_get(storage):
 def test_ttl_gt0(tempdirpath):
     storage = SQLiteStorage(
         filepath=f'{tempdirpath}/cache',
-        ttl=100,
+        ttl=0.001,
         maxsize=100,
     )
     storage[b'1'] = b'one'
-    assert storage[b'1'] == b'one'
+    time.sleep(0.0011)
+    assert storage.get(b'1') is None
 
-    with storage.db as db:
-        db.execute(f'UPDATE cache SET ts = ts - {storage.ttl + 0.01}')
-
+    storage = SQLiteStorage(
+        filepath=f'{tempdirpath}/cache',
+        ttl=99,
+        maxsize=100,
+    )
     storage[b'x'] = b'x'
-
-    res = storage.get(b'1')
-    assert res is None
+    assert storage[b'x'] == b'x'
 
 
 @pytest.mark.parametrize('ttl', (0, -1, -100, -0.5, -1.5))
