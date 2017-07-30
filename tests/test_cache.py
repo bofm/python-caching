@@ -15,8 +15,8 @@ def cache(tempdirpath, request):
 
 
 def test_repr():
-    c = Cache(maxsize=1, ttl=1, filepath=None, typed=True, x='y')
-    expected = ("Cache(maxsize=1, ttl=1, filepath=None, typed=True, "
+    c = Cache(maxsize=1, ttl=1, filepath=None, x='y')
+    expected = ("Cache(maxsize=1, ttl=1, filepath=None, "
                 f"key={make_key}, x='y')")
     assert repr(c) == expected
 

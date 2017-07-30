@@ -37,7 +37,6 @@ class Cache:
         maxsize=1024,
         ttl=-1,
         filepath=None,
-        typed=False,
         key=make_key,
         **kwargs
     ):
@@ -45,11 +44,9 @@ class Cache:
             maxsize=maxsize,
             ttl=ttl,
             filepath=filepath,
-            typed=typed,
             key=key,
             **kwargs
         )
-        self.typed = typed
         self.make_key = key
         self.storage = SQLiteStorage(
             filepath=filepath or ':memory:',
@@ -68,7 +65,7 @@ class Cache:
             raise TypeError(f'{fn} is not callable')
 
         key_prefix = _function_name(fn)
-        make_key_ = self.typed and self._make_key_typed or self.make_key
+        make_key_ = self.make_key
 
         @wraps(fn)
         def wrapper(*args, **kwargs):
@@ -119,9 +116,6 @@ class Cache:
 
     def copy(self, **kwargs):
         return self.__class__(**{**self.params, **kwargs})
-
-    def _make_key_typed(self, *args, **kwargs):
-        return _type_names(args, kwargs), self.make_key(*args, **kwargs)
 
     def encode(self, obj):
         return pickle.dumps(obj)

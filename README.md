@@ -28,7 +28,7 @@ from caching import Cache
 
 # Set default parameters
 
-cache = Cache(filepath='/tmp/mycache', ttl=3600, maxsize=1024, typed=True)
+cache = Cache(filepath='/tmp/mycache', ttl=3600, maxsize=1024)
 
 # Use default parameters
 
@@ -47,7 +47,7 @@ def factorial(n):
 def cache_key(x):
     return str(x)
 
-@cache(ttl=-1, maxsize=10000, typed=False, key=cache_key)
+@cache(ttl=-1, maxsize=10000, key=cache_key)
 def toupper(a):
     return str(a).upper()
 
