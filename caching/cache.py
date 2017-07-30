@@ -102,6 +102,10 @@ class Cache:
         global MISS
         return self.get(key, MISS) is not MISS
 
+    def items(self):
+        return ((self.decode(k), self.decode(v))
+                for k, v in self.storage.items())
+
     def get(self, key, default=None):
         res = self.storage.get(self.encode(key), default)
         if res is not default:

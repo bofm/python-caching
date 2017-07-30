@@ -254,3 +254,12 @@ def test__function_name(obj, expected):
 def test_fn_not_callable(cache):
     with pytest.raises(TypeError):
         cache()(1)
+
+
+def test_items(cache):
+    assert [(k, v) for k, v in cache.items()] == []
+    cache[1] = 'one'
+    assert next(cache.items()) == (1, 'one')
+    time.sleep(0.001)
+    cache[2] = 'two'
+    assert [(k, v) for k, v in cache.items()] == [(1, 'one'), (2, 'two')]
