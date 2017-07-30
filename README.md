@@ -63,6 +63,20 @@ except KeyError:
     assert cache.get(1, None) == result
     assert cache.get(2, None) is None
 
+# Cleanup
+
+import os
+
+cache = Cache(filepath='/tmp/mycache')
+cache[1] = 'one'
+assert 1 in cache
+cache.clear()  # empty the cache
+assert 1 not in cache
+assert list(cache.items()) == []
+assert os.path.isfile('/tmp/mycache')
+cache.remove()  # Empty the cache and remove the underlying file
+assert not os.path.isfile('/tmp/mycache')
+
 ```
 
 # Features
