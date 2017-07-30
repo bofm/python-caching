@@ -145,7 +145,7 @@ def test_copy(cache):
     assert c.copy() is not c
     assert c.copy(a=2) is not c
     assert c.copy(ttl=c.params['ttl'] + 1) is not c
-    c.copy = lambda *_, **__: 1/0
+    c.copy = lambda *_, **__: 1 / 0
     with pytest.raises(ZeroDivisionError):
         c(a=1)(lambda x: 1)
 
