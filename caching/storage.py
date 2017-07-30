@@ -46,7 +46,13 @@ class SQLiteStorage(CacheStorageBase):
             ttl_filter = f' AND ({self.SQLITE_TIMESTAMP} - ts) <= {self.ttl}'
         else:
             ttl_filter = ''
-        self.sql_get = f'SELECT value FROM cache WHERE key = ?{ttl_filter}'
+
+        self.sql_select = f'SELECT value FROM cache WHERE key = ?{ttl_filter}'
+        self.sql_delete = 'DELETE FROM cache WHERE key = ?'
+        self.sql_insert = (
+            "INSERT OR REPLACE INTO cache VALUES "
+            f"(?, {self.SQLITE_TIMESTAMP}, ?)"
+        )
 
     def close(self):
         self.db.close()
@@ -72,7 +78,7 @@ class SQLiteStorage(CacheStorageBase):
         with self.db as db:
             db.execute(
                 "INSERT OR REPLACE INTO cache VALUES "
-                "(?, (julianday('now') - 2440587.5)*86400.0, ?)",
+                f"(?, {self.SQLITE_TIMESTAMP}, ?)",
                 (key, value)
             )
 
@@ -84,13 +90,13 @@ class SQLiteStorage(CacheStorageBase):
             return res
 
     def __delitem__(self, key):
-        cursor = self.db.execute('DELETE FROM cache WHERE key = ?', (key,))
+        cursor = self.db.execute(self.sql_delete, (key,))
         if cursor.rowcount == 0:
             raise KeyError('Not found')
 
     def get(self, key, default=None):
         rows = self.db.execute(
-            self.sql_get,
+            self.sql_select,
             (key,),
         ).fetchall()
         return rows[0][0] if rows else default
