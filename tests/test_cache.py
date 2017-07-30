@@ -182,7 +182,7 @@ def test_remove(tempdirpath, cache):
     assert os.listdir(tempdirpath) == []
 
 
-def test_typed(cache):
+def test_types(cache):
     assert 1.0 == 1
     assert make_key(1.0) == make_key(1)
     assert _type_name(1.0) != _type_name(1)
