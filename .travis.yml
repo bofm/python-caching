@@ -1,10 +1,17 @@
 sudo: false
 language: python
 python:
-  - '3.6'
-  - '3.7-dev'
-  - 'pypy3'
-install: 'pip install -r requirements.txt'
-script: 'coverage run --source=caching setup.py test'
-after_success:
-  coveralls
+- '3.6'
+- 3.7-dev
+- pypy3
+install: pip install -r requirements.txt
+script: coverage run --source=caching setup.py test
+after_success: coveralls
+deploy:
+  provider: pypi
+  user: bofm
+  password:
+    secure: mCf1C2tcGAFt0APPgAC1QPeEMvzgN2nEX7UtwETHRy4CW6fA2g/wF3JugdociGEs9LRaE2vxa9MXwqOzt5HQhE/VEEFpG5+T1+A8iBgMUGEZ6R4tCOu/ggOfg9PWNdtv9dTjADJmJ7cb8uVxj0dDcK8bcXPxeS/Pssy9Xnh1EUdmzBjS8HxOpV6SaFtmdEjcONxMSQTHZHN2RIPDWOW71pRpXMmpsXsWZHzDUfQVt5/2jHQyJHzj/dEHmqUNRQwPtS8R8XR1A5yeayGWNtTTSSyfBc7MHgtUGAtkR+Lz8jVlLwFo+j7kA1e5WPavtFRsQN8eJVuushzInvmx3dST5Kk7h6uIRi+KmE8QCZFreauaBcETbkOwYGai1aCcZbovmlSqZSmFZOMWnOHZg5MVt5f9mkfVFJPnf7ibG8ayQUEmVNJlNaFfLVQMtlxUmBzFzD3m+kSMIlocjf8Tfsb78esIW/2hLlbcl/5OM0ETaeaPvS+xKLWlPUYN839W/nULLKeg6i6SnKEKJQ18kQARsVyX7Pxx/VaxexzIeTz688M4stoMg8GuSVE+H5FIIqrArYTZsboZLHl31F6DzdFD95q3s32KWZx54o4yuTG8/T+AM35jGAkQwbYmDNXi9pLnDXdusgZ2AKMREq124nwkWgTimRzhmfVMmdaJqfNCesY=
+  on:
+    tags: true
+  distributions: "sdist bdist_wheel"

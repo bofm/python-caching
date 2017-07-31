@@ -33,13 +33,33 @@ class PyTest(TestCommand):
         raise SystemExit(errno)
 
 
+version = get_version(os.path.join('caching', '__init__.py'))
+
 setup(
     name='caching',
-    version=get_version(os.path.join('caching', '__init__.py')),
+    version=version,
     packages=['caching'],
     author='bofm',
     author_email='bofm@github.com',
     description='Python utils and decorators for cаching',
+    long_description=(
+        'Python utils and decorators for cаching with TTL,'
+        ' maxsize and file-based storage.'
+    ),
+    url='https://github.com/bofm/python-caching',
+    download_url='https://github.com/bofm/python-caching/tarball/%s' % version,
+    keywords=['cache', 'caching'],
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Natural Language :: English',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+    ],
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
 )
