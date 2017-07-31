@@ -117,7 +117,7 @@ Features
 -  [x] Works with mutable function arguments of the following types: ``dict``, ``list``, ``set``.
 -  [ ] LRS (least recently stored), LRU and LFU cache.
 -  [ ] Multiprocessing- and thread-safe.
--  [ ] Customizable cache key function.
+-  [x] Customizable cache key function.
 -  [ ] Pluggable external caching backends (see Redis example).
 
 .. |Build Status| image:: https://travis-ci.org/bofm/python-caching.svg?branch=master
