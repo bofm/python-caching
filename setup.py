@@ -1,5 +1,17 @@
+import re
+import os
+
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+
+
+def get_version(filepath):
+    with open(filepath) as f:
+        match = re.search("__version__ = '(.*?)'", f.read(8192))
+        if not match:
+            raise RuntimeError('Could not find version.')
+        version = match.group(1)
+        return version
 
 
 class PyTest(TestCommand):
@@ -20,9 +32,10 @@ class PyTest(TestCommand):
         errno = pytest.main(self.pytest_args)
         raise SystemExit(errno)
 
+
 setup(
     name='caching',
-    version='0.1',
+    version=get_version(os.path.join('caching', '__init__.py')),
     packages=['caching'],
     author='bofm',
     author_email='bofm@github.com',
@@ -30,4 +43,3 @@ setup(
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
 )
-
