@@ -21,9 +21,15 @@ Usage
 
 .. code:: python
 
-    from caching import cache
+    from caching import Cache
 
-    @cache(ttl=60, maxsize=128, filepath='/tmp/mycache')
+    # File-based cache with unlimited ttl and maximum of 128 cached elements
+    @Cache(ttl=-1, maxsize=128, filepath='/tmp/mycache')
+    def long_running_function(a, b, *args, c=None, **kwargs):
+        pass
+
+    # Memory-based cache with limited ttl and maxsize
+    @Cache(ttl=60, maxsize=128)
     def long_running_function(a, b, *args, c=None, **kwargs):
         pass
 
@@ -34,32 +40,49 @@ Advanced usage
 
     from caching import Cache
 
-    # Set default parameters
+    # One cache for many functions
 
     cache = Cache(filepath='/tmp/mycache', ttl=3600, maxsize=1024)
-
-    # Use default parameters
 
     @cache
     def pow(x, y):
         return x**y
 
-    # Override default parameters
-
-    @cache(filepath=None, ttl=-1, maxsize=10000)
+    @cache
     def factorial(n):
         if n == 0:
             return 1
         return n * factorial(n-1)
 
+
+    # Custom cache key
+
     def cache_key(x):
         return str(x)
 
-    @cache(ttl=-1, maxsize=10000, key=cache_key)
+    cache = Cache(key=cache_key)
+    call_count = 0
+
+    @cache
     def toupper(a):
+        nonlocal call_count
+        call_count += 1
         return str(a).upper()
 
+    @cache
+    def tolower(a):
+        nonlocal call_count
+        call_count += 1
+        return str(a).lower()
+
+    # The key function returns the same result for both 1 and '1'
+    assert toupper('1') == toupper(1)
+    assert call_count == 1
+
+
     # Using cache as a key-value store
+
+    cache = Cache()
 
     try:
         result = cache[1]
