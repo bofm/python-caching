@@ -23,7 +23,7 @@ Usage
 
     from caching import Cache
 
-    # File-based cache with unlimited ttl and maximum of 128 cached elements
+    # File-based cache with unlimited ttl and maximum of 128 cached results
     @Cache(ttl=-1, maxsize=128, filepath='/tmp/mycache')
     def long_running_function(a, b, *args, c=None, **kwargs):
         pass
