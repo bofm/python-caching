@@ -56,29 +56,19 @@ Advanced usage
         return n * factorial(n-1)
 
 
-    # Custom cache key
-
-    def cache_key(x):
-        return str(x)
-
-    cache = Cache(key=cache_key)
-    call_count = 0
-
-
-    @cache
+    # Custom cache key function
+    
+    @Cache(key=lambda x: x[0])
     def toupper(a):
         global call_count
         call_count += 1
         return str(a).upper()
-
-    @cache
-    def tolower(a):
-        global call_count
-        call_count += 1
-        return str(a).lower()
-
-    # The key function returns the same result for both 1 and '1'
-    assert toupper('1') == toupper(1)
+    
+    call_count = 0
+    
+    # The key function returns the same result for both 'aaa' and 'azz'
+    # so the cached result from the first call is returned in the second call
+    assert toupper('aaa') == toupper('azz') == 'AAA'
     assert call_count == 1
 
 
