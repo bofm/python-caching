@@ -140,6 +140,68 @@ def test_items(storage):
     items = [item for item in storage.items()]
 
     assert items == [
-        (b'1',  b'one'),
+        (b'1', b'one'),
         (b'2', b'two'),
     ]
+
+
+def ensure_index(db, table_name, columns, unique):
+    columns = ', '.join(columns)
+    unique = 'UNIQUE' if unique else ''
+    query = (
+        f"SELECT * FROM SQLITE_MASTER "
+        f"WHERE TYPE = 'index' AND tbl_name = '{table_name}'"
+        f" AND sql LIKE '%{unique} INDEX % ON {table_name} ({columns})'"
+    )
+    rows = db.execute(query).fetchall()
+    assert len(rows) == 1
+
+
+def test_schema_fifo():
+    storage = SQLiteStorage(
+        ttl=1,
+        maxsize=1,
+        policy='FIFO',
+        filepath=':memory:'
+    )
+
+    def q(*args):
+        return storage.db.execute(*args).fetchall()
+
+    ensure_index(storage.db, 'cache', ['ts'], False)
+    assert len(q("SELECT * FROM SQLITE_MASTER "
+                 "WHERE TYPE = 'trigger' AND tbl_name = 'cache'")) == 1
+
+
+def test_schema_lru():
+    storage = SQLiteStorage(
+        ttl=1,
+        maxsize=1,
+        policy='LRU',
+        filepath=':memory:'
+    )
+
+    def q(*args):
+        return storage.db.execute(*args).fetchall()
+
+    ensure_index(storage.db, 'cache', ['ts'], False)
+    ensure_index(storage.db, 'cache', ['used', 'ts'], False)
+    assert len(q("SELECT * FROM SQLITE_MASTER "
+                 "WHERE TYPE = 'trigger' AND tbl_name = 'cache'")) == 1
+
+
+def test_schema_lfu():
+    storage = SQLiteStorage(
+        ttl=1,
+        maxsize=1,
+        policy='LFU',
+        filepath=':memory:'
+    )
+
+    def q(*args):
+        return storage.db.execute(*args).fetchall()
+
+    ensure_index(storage.db, 'cache', ['ts'], False)
+    ensure_index(storage.db, 'cache', ['used', 'ts'], False)
+    assert len(q("SELECT * FROM SQLITE_MASTER "
+                 "WHERE TYPE = 'trigger' AND tbl_name = 'cache'")) == 1

@@ -15,8 +15,8 @@ def cache(tempdirpath, request):
 
 
 def test_repr():
-    c = Cache(maxsize=1, ttl=1, filepath=None, x='y')
-    expected = ("Cache(maxsize=1, ttl=1, filepath=None, "
+    c = Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', x='y')
+    expected = ("Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', "
                 f"key={make_key}, x='y')")
     assert repr(c) == expected
 
@@ -263,3 +263,58 @@ def test_items(cache):
     time.sleep(0.001)
     cache[2] = 'two'
     assert [(k, v) for k, v in cache.items()] == [(1, 'one'), (2, 'two')]
+
+
+@pytest.mark.parametrize('storage', ['file', 'memory'])
+def test_lru(tempdirpath, storage):
+    filepath = None if storage == 'memory' else f'{tempdirpath}/cache'
+    cache = Cache(filepath=filepath, maxsize=2, ttl=-1, policy='LRU')
+
+    @cache
+    def func(a):
+        return a
+
+    def keys():
+        return [arg for (fn_name, arg), v in cache.items()]
+
+    assert func(1) == 1
+    assert func(2) == 2
+    the_keys = keys()
+    assert len(the_keys) == 2
+    assert 1 in the_keys and 2 in the_keys
+
+    assert func(1) == 1
+    assert func(3) == 3
+    the_keys = keys()
+    assert len(the_keys) == 2
+    assert 1 in the_keys and 3 in the_keys
+    assert 2 not in the_keys
+
+
+@pytest.mark.parametrize('storage', ['file', 'memory'])
+def test_lfu(tempdirpath, storage):
+    filepath = None if storage == 'memory' else f'{tempdirpath}/cache'
+    cache = Cache(filepath=filepath, maxsize=2, ttl=-1, policy='LFU')
+
+    @cache
+    def func(a):
+        return a
+
+    def keys():
+        return [arg for (fn_name, arg), v in cache.items()]
+
+    assert func(1) == 1
+    assert func(2) == 2
+    the_keys = keys()
+    assert len(the_keys) == 2
+    assert 1 in the_keys and 2 in the_keys
+
+    assert func(1) == 1
+    assert func(1) == 1
+    assert func(2) == 2
+    assert func(2) == 2
+    assert func(3) == 3
+    the_keys = keys()
+    assert len(the_keys) == 2
+    assert 1 in the_keys and 2 in the_keys
+    assert 3 not in the_keys

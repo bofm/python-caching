@@ -1,16 +1,17 @@
 import os
 import sqlite3
 from contextlib import suppress
-from typing import Generator, Tuple, Union
+from typing import Generator, Tuple, Union, ByteString
 
 
 class CacheStorageBase:
 
-    def __init__(self, *, maxsize, ttl):
+    def __init__(self, *, maxsize: int, ttl: Union[int, float], policy: str):
         self.maxsize = maxsize
         self.ttl = ttl
+        self.policy = policy
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: ByteString, value: ByteString) -> None:
         raise NotImplementedError  # pragma: no cover
 
     def __getitem__(self, key) -> bytes:
@@ -19,7 +20,7 @@ class CacheStorageBase:
     def __delitem__(self, key) -> None:
         raise NotImplementedError  # pragma: no cover
 
-    def get(self, key, default=None) -> Union[bytes, None]:
+    def get(self, key: ByteString, default=None) -> Union[bytes, None]:
         raise NotImplementedError  # pragma: no cover
 
     def clear(self) -> None:
@@ -34,9 +35,32 @@ class CacheStorageBase:
 
 class SQLiteStorage(CacheStorageBase):
     SQLITE_TIMESTAMP = "(julianday('now') - 2440587.5)*86400.0"
+    POLICIES = {
+        'FIFO': {
+            'additional_columns': [],
+            'after_get_ok': None,
+            'additional_indexes': [],
+            'delete_order_by': 'ts',
+        },
+        'LRU': {
+            f'additional_columns': [f"used INT NOT NULL DEFAULT 0"],
+            f'additional_indexes': ['used, ts'],
+            f'after_get_ok': f"UPDATE cache SET used = (SELECT max(used) FROM cache) + 1",
+            f'delete_order_by': 'used, ts',
+        },
+        'LFU': {
+            'additional_columns': ['used INT NOT NULL DEFAULT 0'],
+            'additional_indexes': ['used, ts'],
+            'after_get_ok': "UPDATE cache SET used = used + 1",
+            f'delete_order_by': 'used, ts',
+        },
+    }
 
-    def __init__(self, *, filepath, ttl, maxsize):
-        super(SQLiteStorage, self).__init__(ttl=ttl, maxsize=maxsize)
+    def __init__(self, *, filepath, ttl, maxsize, policy='FIFO'):
+        if policy not in self.POLICIES:
+            raise ValueError(f'Invalid policy: {policy}')
+        super(SQLiteStorage, self).__init__(
+            ttl=ttl, maxsize=maxsize, policy=policy)
         self.filepath = filepath
         self.db = sqlite3.connect(filepath, isolation_level='DEFERRED')
         self.init_db()
@@ -77,8 +101,7 @@ class SQLiteStorage(CacheStorageBase):
     def __setitem__(self, key, value):
         with self.db as db:
             db.execute(
-                "INSERT OR REPLACE INTO cache VALUES "
-                f"(?, {self.SQLITE_TIMESTAMP}, ?)",
+                "INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)",
                 (key, value)
             )
 
@@ -95,44 +118,61 @@ class SQLiteStorage(CacheStorageBase):
             raise KeyError('Not found')
 
     def get(self, key, default=None):
-        rows = self.db.execute(
-            self.sql_select,
-            (key,),
-        ).fetchall()
-        return rows[0][0] if rows else default
+        with self.db:
+            rows = self.db.execute(
+                self.sql_select,
+                (key,),
+            ).fetchall()
+            after_get_ok = self.POLICIES[self.policy]['after_get_ok']
+            if rows:
+                if after_get_ok:
+                    self.db.execute(
+                        f'{after_get_ok} WHERE key = ?',
+                        (key,),
+                    )
+                return rows[0][0]
+            else:
+                return default
 
     def init_db(self):
+        policy_stuff = self.POLICIES[self.policy]
+
         after_insert_actions = []
         if self.ttl > 0:
-            after_insert_actions.append(
-                '  DELETE FROM cache WHERE '
-                f'({self.SQLITE_TIMESTAMP} - ts) > {self.ttl};'
-            )
+            after_insert_actions.append(f'''
+                DELETE FROM cache WHERE
+                ({self.SQLITE_TIMESTAMP} - ts) > {self.ttl};
+            ''')
         if self.maxsize > 0:
-            after_insert_actions.append(
-                '  DELETE FROM cache WHERE key in ('
-                'SELECT key FROM cache '
-                'ORDER BY ts LIMIT '
-                f'max(0, (SELECT COUNT(key) FROM cache) - {self.maxsize}));'
-            )
+            after_insert_actions.append(f'''
+                DELETE FROM cache WHERE key in (
+                    SELECT key FROM cache
+                    ORDER BY {policy_stuff['delete_order_by']}
+                    LIMIT max(0, (SELECT COUNT(key) FROM cache) - {self.maxsize})
+                );
+            ''')
 
         with self.db as db:
-            db.execute(
-                'CREATE TABLE IF NOT EXISTS cache ('
-                ' key BINARY PRIMARY KEY,'
-                ' ts REAL,'
-                ' value BLOB'
-                ') WITHOUT ROWID'
-            )
+            db.execute(f'''
+                CREATE TABLE IF NOT EXISTS cache (
+                    key BINARY PRIMARY KEY,
+                    ts REAL NOT NULL DEFAULT ({self.SQLITE_TIMESTAMP}),
+                    {''.join(f"{c}, " for c in policy_stuff['additional_columns'])}
+                    value BLOB NOT NULL
+                ) WITHOUT ROWID
+            ''')
             db.execute('CREATE INDEX IF NOT EXISTS i_cache_ts ON cache (ts)')
+
+            for i, columns in enumerate(policy_stuff['additional_indexes']):
+                db.execute(f'CREATE INDEX IF NOT EXISTS i_cache_{i} ON cache ({columns})')
+
             if after_insert_actions:
-                trigger_ddl = (
-                    'CREATE TRIGGER IF NOT EXISTS t_cache_cleanup\n'
-                    'AFTER INSERT ON cache FOR EACH ROW BEGIN\n'
-                    '%s\n'
-                    'END'
-                ) % '\n'.join(after_insert_actions)
-                db.execute(trigger_ddl)
+                db.execute(f'''
+                    CREATE TRIGGER IF NOT EXISTS t_cache_cleanup
+                    AFTER INSERT ON cache FOR EACH ROW BEGIN
+                        %s
+                    END
+                ''' % '\n'.join(after_insert_actions))
 
     def clear(self):
         with self.db as db:

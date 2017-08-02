@@ -28,8 +28,9 @@ Usage
     def long_running_function(a, b, *args, c=None, **kwargs):
         pass
 
-    # Memory-based cache with limited ttl and maxsize
-    @Cache(ttl=60, maxsize=128)
+    # Memory-based cache with limited ttl and maxsize and "least recently used"
+    # cache replacement policy.
+    @Cache(ttl=60, maxsize=128, policy='LRU')
     def long_running_function(a, b, *args, c=None, **kwargs):
         pass
 
@@ -115,9 +116,9 @@ Features
 -  [x] TTL and maxsize.
 -  [x] Works with ``*args``, ``**kwargs``.
 -  [x] Works with mutable function arguments of the following types: ``dict``, ``list``, ``set``.
--  [ ] LRS (least recently stored), LRU and LFU cache.
--  [ ] Multiprocessing- and thread-safe.
+-  [x] FIFO, LRU and LFU cache replacement policies.
 -  [x] Customizable cache key function.
+-  [ ] Multiprocessing- and thread-safe.
 -  [ ] Pluggable external caching backends (see Redis example).
 
 .. |Build Status| image:: https://travis-ci.org/bofm/python-caching.svg?branch=master

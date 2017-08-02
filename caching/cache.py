@@ -1,6 +1,7 @@
 import pickle
 from collections import OrderedDict
 from functools import wraps
+from typing import Union, Callable
 
 from .storage import SQLiteStorage
 
@@ -30,20 +31,41 @@ def _function_name(fn):
 
 
 class Cache:
+    """Cache.
+
+    Can be used as a function decorator and as a dict-like key-value store.
+    """
 
     def __init__(
         self,
         *,
-        maxsize=1024,
-        ttl=-1,
-        filepath=None,
-        key=make_key,
+        maxsize: int=1024,
+        ttl: Union[float, int]=-1,
+        filepath: Union[str, None]=None,
+        policy: str='FIFO',
+        key: Callable=make_key,
         **kwargs
     ):
+        """
+        Args:
+            maxsize: maximum number of keys in cache.
+            ttl: amount of time in seconds since the item is added to cache
+                before the item is deleted from cache.
+            filepath: if a string is passed then file path where the cache
+                is stored on disk. If `None` is passed then the cache is stored
+                in memory.
+            policy: one of: FIFO, LRU, LFU.
+                Cache replacement (or eviction) policy.
+            key: a function which takes the arguments and keyword arguments of
+                the decorated by the `Cache` instance function and retuns
+                something which will be used as a key under which the function's
+                return value will be stored in cache.
+        """
         self.params = OrderedDict(
             maxsize=maxsize,
             ttl=ttl,
             filepath=filepath,
+            policy=policy,
             key=key,
             **kwargs
         )
@@ -52,6 +74,7 @@ class Cache:
             filepath=filepath or ':memory:',
             ttl=ttl,
             maxsize=maxsize,
+            policy=policy,
         )
 
     def __repr__(self):
@@ -135,6 +158,3 @@ class Cache:
 
     def remove(self):
         self.storage.remove()
-
-
-cache = Cache()
