@@ -64,15 +64,16 @@ Advanced usage
     cache = Cache(key=cache_key)
     call_count = 0
 
+
     @cache
     def toupper(a):
-        nonlocal call_count
+        global call_count
         call_count += 1
         return str(a).upper()
 
     @cache
     def tolower(a):
-        nonlocal call_count
+        global call_count
         call_count += 1
         return str(a).lower()
 
