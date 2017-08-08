@@ -44,7 +44,7 @@ class Cache:
         filepath: Union[str, None]=None,
         policy: str='FIFO',
         key: Callable=make_key,
-        **kwargs
+        **kwargs,
     ):
         """
         Args:
@@ -67,7 +67,7 @@ class Cache:
             filepath=filepath,
             policy=policy,
             key=key,
-            **kwargs
+            **kwargs,
         )
         self.make_key = key
         self.storage = SQLiteStorage(
@@ -126,8 +126,10 @@ class Cache:
         return self.get(key, MISS) is not MISS
 
     def items(self):
-        return ((self.decode(k), self.decode(v))
-                for k, v in self.storage.items())
+        return (
+            (self.decode(k), self.decode(v))
+            for k, v in self.storage.items()
+        )
 
     def get(self, key, default=None):
         res = self.storage.get(self.encode(key), default)

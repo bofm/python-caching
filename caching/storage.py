@@ -60,7 +60,8 @@ class SQLiteStorage(CacheStorageBase):
         if policy not in self.POLICIES:
             raise ValueError(f'Invalid policy: {policy}')
         super(SQLiteStorage, self).__init__(
-            ttl=ttl, maxsize=maxsize, policy=policy)
+            ttl=ttl, maxsize=maxsize, policy=policy,
+        )
         self.filepath = filepath
         self.db = sqlite3.connect(filepath, isolation_level='DEFERRED')
         self.init_db()
@@ -102,7 +103,7 @@ class SQLiteStorage(CacheStorageBase):
         with self.db as db:
             db.execute(
                 "INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)",
-                (key, value)
+                (key, value),
             )
 
     def __getitem__(self, key):
