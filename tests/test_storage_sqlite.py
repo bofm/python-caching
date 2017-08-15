@@ -7,8 +7,8 @@ from caching import SQLiteStorage
 
 
 @pytest.fixture
-def storage(tempdirpath):
-    filepath = f'{tempdirpath}/cache'
+def storage(tmpdir):
+    filepath = f'{tmpdir}/cache'
     with SQLiteStorage(
         filepath=filepath,
         ttl=60,
@@ -18,8 +18,8 @@ def storage(tempdirpath):
         yield s
 
 
-def test_repr(tempdirpath):
-    filepath = tempdirpath + '/cache'
+def test_repr(tmpdir):
+    filepath = f'{tmpdir}/cache'
     storage = SQLiteStorage(maxsize=1, ttl=1, filepath=filepath)
     expected = f"SQLiteStorage(filepath='{filepath}', maxsize=1, ttl=1)"
     assert repr(storage) == expected
@@ -44,9 +44,9 @@ def test_set_get(storage):
         del storage[b'1']
 
 
-def test_ttl_gt0(tempdirpath):
+def test_ttl_gt0(tmpdir):
     storage = SQLiteStorage(
-        filepath=f'{tempdirpath}/cache',
+        filepath=f'{tmpdir}/cache',
         ttl=0.001,
         maxsize=100,
     )
@@ -55,7 +55,7 @@ def test_ttl_gt0(tempdirpath):
     assert storage.get(b'1') is None
 
     storage = SQLiteStorage(
-        filepath=f'{tempdirpath}/cache',
+        filepath=f'{tmpdir}/cache',
         ttl=99,
         maxsize=100,
     )
@@ -64,9 +64,9 @@ def test_ttl_gt0(tempdirpath):
 
 
 @pytest.mark.parametrize('ttl', (0, -1, -100, -0.5, -1.5))
-def test_ttl_lte0(tempdirpath, ttl):
+def test_ttl_lte0(tmpdir, ttl):
     with SQLiteStorage(
-        filepath=f'{tempdirpath}/cache',
+        filepath=f'{tmpdir}/cache',
         ttl=ttl,
         maxsize=100,
     ) as storage:
@@ -80,9 +80,9 @@ def test_ttl_lte0(tempdirpath, ttl):
         assert storage.get(b'1') == b'one'
 
 
-def test_maxsize(tempdirpath):
+def test_maxsize(tmpdir):
     with SQLiteStorage(
-        filepath=f'{tempdirpath}/cache',
+        filepath=f'{tmpdir}/cache',
         ttl=-1,
         maxsize=2,
     ) as storage:
@@ -119,15 +119,15 @@ def test_clear(storage):
     assert storage.get(b'2') is None
 
 
-def test_remove(tempdirpath):
-    assert os.listdir(tempdirpath) == []
-    filepath = f'{tempdirpath}/cache'
+def test_remove(tmpdir):
+    assert os.listdir(tmpdir) == []
+    filepath = f'{tmpdir}/cache'
     storage = SQLiteStorage(filepath=filepath, ttl=-1, maxsize=10)
     assert os.path.isfile(filepath)
-    assert os.listdir(tempdirpath) == ['cache']
+    assert os.listdir(tmpdir) == ['cache']
     storage.remove()
     assert not os.path.isfile(filepath)
-    assert os.listdir(tempdirpath) == []
+    assert os.listdir(tmpdir) == []
 
 
 def test_items(storage):
@@ -162,15 +162,17 @@ def test_schema_fifo():
         ttl=1,
         maxsize=1,
         policy='FIFO',
-        filepath=':memory:'
+        filepath=':memory:',
     )
 
     def q(*args):
         return storage.db.execute(*args).fetchall()
 
     ensure_index(storage.db, 'cache', ['ts'], False)
-    assert len(q("SELECT * FROM SQLITE_MASTER "
-                 "WHERE TYPE = 'trigger' AND tbl_name = 'cache'")) == 1
+    assert len(q(
+        "SELECT * FROM SQLITE_MASTER "
+        "WHERE TYPE = 'trigger' AND tbl_name = 'cache'",
+    )) == 1
 
 
 def test_schema_lru():
@@ -178,7 +180,7 @@ def test_schema_lru():
         ttl=1,
         maxsize=1,
         policy='LRU',
-        filepath=':memory:'
+        filepath=':memory:',
     )
 
     def q(*args):
@@ -186,8 +188,10 @@ def test_schema_lru():
 
     ensure_index(storage.db, 'cache', ['ts'], False)
     ensure_index(storage.db, 'cache', ['used', 'ts'], False)
-    assert len(q("SELECT * FROM SQLITE_MASTER "
-                 "WHERE TYPE = 'trigger' AND tbl_name = 'cache'")) == 1
+    assert len(q(
+        "SELECT * FROM SQLITE_MASTER "
+        "WHERE TYPE = 'trigger' AND tbl_name = 'cache'",
+    )) == 1
 
 
 def test_schema_lfu():
@@ -195,7 +199,7 @@ def test_schema_lfu():
         ttl=1,
         maxsize=1,
         policy='LFU',
-        filepath=':memory:'
+        filepath=':memory:',
     )
 
     def q(*args):
@@ -203,5 +207,7 @@ def test_schema_lfu():
 
     ensure_index(storage.db, 'cache', ['ts'], False)
     ensure_index(storage.db, 'cache', ['used', 'ts'], False)
-    assert len(q("SELECT * FROM SQLITE_MASTER "
-                 "WHERE TYPE = 'trigger' AND tbl_name = 'cache'")) == 1
+    assert len(q(
+        "SELECT * FROM SQLITE_MASTER "
+        "WHERE TYPE = 'trigger' AND tbl_name = 'cache'",
+    )) == 1

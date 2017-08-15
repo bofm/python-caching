@@ -8,16 +8,18 @@ from caching.cache import _type_name, _function_name, _type_names, make_key
 
 
 @pytest.fixture(params=[False, True], ids=['memory', 'file'])
-def cache(tempdirpath, request):
-    filepath = request.param and f'{tempdirpath}/cache' or None
+def cache(tmpdir, request):
+    filepath = request.param and f'{tmpdir}/cache' or None
     with Cache(filepath=filepath) as c:
         yield c
 
 
 def test_repr():
     c = Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', x='y')
-    expected = ("Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', "
-                f"key={make_key}, x='y')")
+    expected = (
+        "Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', "
+        f"key={make_key}, x='y')"
+    )
     assert repr(c) == expected
 
 
@@ -167,19 +169,19 @@ def test_raises_if_closed(cache):
         cache[1] = 1
 
 
-def test_remove(tempdirpath, cache):
+def test_remove(tmpdir, cache):
     cache.remove()
-    filepath = f'{tempdirpath}/cache'
+    filepath = f'{tmpdir}/cache'
     cache = Cache(filepath=filepath)
     assert os.path.isfile(filepath)
-    assert os.listdir(tempdirpath) == ['cache']
+    assert os.listdir(tmpdir) == ['cache']
     cache[1] = 'one'
     cache[2] = 'two'
     assert os.path.isfile(filepath)
-    assert os.listdir(tempdirpath) == ['cache']
+    assert os.listdir(tmpdir) == ['cache']
     cache.remove()
     assert not os.path.isfile(filepath)
-    assert os.listdir(tempdirpath) == []
+    assert os.listdir(tmpdir) == []
 
 
 def test_types(cache):
@@ -215,19 +217,21 @@ def test_make_key():
     assert make_key(1, 2, one=1) == ((1, 2), 'one', 1)
 
 
-@pytest.mark.parametrize('obj, expected', [
-    (1, 'builtins.int'),
-    ('', 'builtins.str'),
-    ([], 'builtins.list'),
-    ({}, 'builtins.dict'),
-    (set(), 'builtins.set'),
-    (object(), 'builtins.object'),
-    (os, 'builtins.module'),
-    (lambda: 1, 'builtins.function'),
-    (Cache().get, 'builtins.method'),
-    (Cache, 'builtins.type'),
-    (None, 'builtins.NoneType'),
-])
+@pytest.mark.parametrize(
+    'obj, expected', [
+        (1, 'builtins.int'),
+        ('', 'builtins.str'),
+        ([], 'builtins.list'),
+        ({}, 'builtins.dict'),
+        (set(), 'builtins.set'),
+        (object(), 'builtins.object'),
+        (os, 'builtins.module'),
+        (lambda: 1, 'builtins.function'),
+        (Cache().get, 'builtins.method'),
+        (Cache, 'builtins.type'),
+        (None, 'builtins.NoneType'),
+    ],
+)
 def test__type_name(obj, expected):
     assert _type_name(obj) == expected
 
@@ -243,10 +247,12 @@ def test__type_names():
     test(expected, 'a', 1, one=1, l=[1, 2])
 
 
-@pytest.mark.parametrize('obj, expected', [
-    (lambda: 1, f'{__name__}.<lambda>'),
-    (cache, f'{__name__}.cache'),
-])
+@pytest.mark.parametrize(
+    'obj, expected', [
+        (lambda: 1, f'{__name__}.<lambda>'),
+        (cache, f'{__name__}.cache'),
+    ],
+)
 def test__function_name(obj, expected):
     assert _function_name(obj) == expected
 
@@ -266,8 +272,8 @@ def test_items(cache):
 
 
 @pytest.mark.parametrize('storage', ['file', 'memory'])
-def test_lru(tempdirpath, storage):
-    filepath = None if storage == 'memory' else f'{tempdirpath}/cache'
+def test_lru(tmpdir, storage):
+    filepath = None if storage == 'memory' else f'{tmpdir}/cache'
     cache = Cache(filepath=filepath, maxsize=2, ttl=-1, policy='LRU')
 
     @cache
@@ -292,8 +298,8 @@ def test_lru(tempdirpath, storage):
 
 
 @pytest.mark.parametrize('storage', ['file', 'memory'])
-def test_lfu(tempdirpath, storage):
-    filepath = None if storage == 'memory' else f'{tempdirpath}/cache'
+def test_lfu(tmpdir, storage):
+    filepath = None if storage == 'memory' else f'{tmpdir}/cache'
     cache = Cache(filepath=filepath, maxsize=2, ttl=-1, policy='LFU')
 
     @cache
