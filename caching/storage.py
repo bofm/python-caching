@@ -37,22 +37,22 @@ class SQLiteStorage(CacheStorageBase):
     SQLITE_TIMESTAMP = "(julianday('now') - 2440587.5)*86400.0"
     POLICIES = {
         'FIFO': {
-            'additional_columns': [],
+            'additional_columns': (),
             'after_get_ok': None,
-            'additional_indexes': [],
+            'additional_indexes': (),
             'delete_order_by': 'ts',
         },
         'LRU': {
-            f'additional_columns': [f"used INT NOT NULL DEFAULT 0"],
-            f'additional_indexes': ['used, ts'],
-            f'after_get_ok': f"UPDATE cache SET used = (SELECT max(used) FROM cache) + 1",
-            f'delete_order_by': 'used, ts',
+            'additional_columns': ("used INT NOT NULL DEFAULT 0",),
+            'additional_indexes': ('used, ts',),
+            'after_get_ok': "UPDATE cache SET used = (SELECT max(used) FROM cache) + 1",
+            'delete_order_by': 'used, ts',
         },
         'LFU': {
-            'additional_columns': ['used INT NOT NULL DEFAULT 0'],
-            'additional_indexes': ['used, ts'],
+            'additional_columns': ('used INT NOT NULL DEFAULT 0',),
+            'additional_indexes': ('used, ts',),
             'after_get_ok': "UPDATE cache SET used = used + 1",
-            f'delete_order_by': 'used, ts',
+            'delete_order_by': 'used, ts',
         },
     }
 
@@ -75,9 +75,13 @@ class SQLiteStorage(CacheStorageBase):
         self.sql_select = f'SELECT value FROM cache WHERE key = ?{ttl_filter}'
         self.sql_delete = 'DELETE FROM cache WHERE key = ?'
         self.sql_insert = (
-            "INSERT OR REPLACE INTO cache VALUES "
-            f"(?, {self.SQLITE_TIMESTAMP}, ?)"
+            'INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)'
         )
+        after_get_ok = self.POLICIES[self.policy]['after_get_ok']
+        if after_get_ok:
+            self.sql_after_get_ok = f'{after_get_ok} WHERE key = ?'
+        else:
+            self.sql_after_get_ok = None
 
     def close(self):
         self.db.close()
@@ -101,10 +105,7 @@ class SQLiteStorage(CacheStorageBase):
 
     def __setitem__(self, key, value):
         with self.db as db:
-            db.execute(
-                "INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)",
-                (key, value),
-            )
+            db.execute(self.sql_insert, (key, value))
 
     def __getitem__(self, key):
         res = self.get(key, None)
@@ -124,13 +125,9 @@ class SQLiteStorage(CacheStorageBase):
                 self.sql_select,
                 (key,),
             ).fetchall()
-            after_get_ok = self.POLICIES[self.policy]['after_get_ok']
             if rows:
-                if after_get_ok:
-                    self.db.execute(
-                        f'{after_get_ok} WHERE key = ?',
-                        (key,),
-                    )
+                if self.sql_after_get_ok:
+                    self.db.execute(self.sql_after_get_ok, (key,))
                 return rows[0][0]
             else:
                 return default
@@ -168,7 +165,7 @@ class SQLiteStorage(CacheStorageBase):
                 db.execute(f'CREATE INDEX IF NOT EXISTS i_cache_{i} ON cache ({columns})')
 
             if after_insert_actions:
-                db.execute(f'''
+                db.execute('''
                     CREATE TRIGGER IF NOT EXISTS t_cache_cleanup
                     AFTER INSERT ON cache FOR EACH ROW BEGIN
                         %s
