@@ -56,6 +56,15 @@ Advanced usage
         return n * factorial(n-1)
 
 
+    # Caching the last result and returning it only in case of errors
+
+    @Cache(maxsize=1, only_on_errors=(ConnectionError, TimeoutError))
+    def api_request():
+        """Request some remote resource which sometimes become unavailable.
+        If this functions raises ConnectionError or TimeoutError, then the
+        last cached result will be returned, if available."""
+
+
     # Custom cache key function
     
     @Cache(key=lambda x: x[0])

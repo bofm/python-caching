@@ -15,10 +15,10 @@ def cache(tmpdir, request):
 
 
 def test_repr():
-    c = Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', x='y')
+    c = Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', only_on_errors=False, x='y')
     expected = (
         "Cache(maxsize=1, ttl=1, filepath=None, policy='FIFO', "
-        f"key={make_key}, x='y')"
+        f"key={make_key}, only_on_errors=False, x='y')"
     )
     assert repr(c) == expected
 
@@ -324,3 +324,44 @@ def test_lfu(tmpdir, storage):
     assert len(the_keys) == 2
     assert 1 in the_keys and 2 in the_keys
     assert 3 not in the_keys
+
+
+def test_only_on_errors():
+
+    x = 2
+    call_count = 0
+    raised = False
+    n = 0
+
+    @Cache(only_on_errors=(ZeroDivisionError, ConnectionError))
+    def fn():
+        nonlocal x, n, call_count, raised
+        call_count += 1
+        try:
+            0 / x
+        except ZeroDivisionError:
+            raised = True
+            raise
+        n += 1
+        x -= 1
+        return n
+
+    assert fn() == 1
+    assert call_count == 1
+    assert fn() == 2
+    assert call_count == 2
+    assert x == 0
+    assert fn() == 2  # ZeroDivision and returning cached result
+    assert call_count == 3
+    assert raised
+    assert fn() == 2
+    x = 1
+    raised = False
+    assert fn() == 3
+    assert call_count == 5
+    assert fn() == 3  # ZeroDivision and returning cached result
+    assert raised
+    assert call_count == 6
+    fn._cache.clear()
+    with pytest.raises(ZeroDivisionError):
+        fn()

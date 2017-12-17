@@ -44,6 +44,7 @@ class Cache:
         filepath: Union[str, None]=None,
         policy: str='FIFO',
         key: Callable=make_key,
+        only_on_errors=False,
         **kwargs,
     ):
         """
@@ -60,6 +61,9 @@ class Cache:
                 the decorated by the `Cache` instance function and retuns
                 something which will be used as a key under which the function's
                 return value will be stored in cache.
+            only_on_errors: exception or a tuple of exceptions. Return cached
+                results only in case of the exceptions are raisd in the
+                decorated function.
         """
         self.params = OrderedDict(
             maxsize=maxsize,
@@ -67,8 +71,10 @@ class Cache:
             filepath=filepath,
             policy=policy,
             key=key,
+            only_on_errors=only_on_errors,
             **kwargs,
         )
+        self.only_on_errors = only_on_errors
         self.make_key = key
         self.storage = SQLiteStorage(
             filepath=filepath or ':memory:',
@@ -97,9 +103,19 @@ class Cache:
             key = (key_prefix, *make_key_(*args, **kwargs))
             # Something unique is needed here.
             # None is not an option because fn may return None. So MISS is used
-            res = self.get(key, MISS)
-            if res is MISS:
-                res = self[key] = fn(*args, **kwargs)
+            if self.only_on_errors:
+                try:
+                    res = fn(*args, **kwargs)
+                except self.only_on_errors as e:
+                    res = self.get(key, MISS)
+                    if res is MISS:
+                        raise e
+                else:
+                    self[key] = res
+            else:
+                res = self.get(key, MISS)
+                if res is MISS:
+                    res = self[key] = fn(*args, **kwargs)
             return res
         wrapper._cache = self
         return wrapper
