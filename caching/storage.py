@@ -43,15 +43,15 @@ class SQLiteStorage(CacheStorageBase):
             'delete_order_by': 'ts',
         },
         'LRU': {
-            'additional_columns': ("used INT NOT NULL DEFAULT 0",),
+            'additional_columns': ('used INT NOT NULL DEFAULT 0',),
             'additional_indexes': ('used, ts',),
-            'after_get_ok': "UPDATE cache SET used = (SELECT max(used) FROM cache) + 1",
+            'after_get_ok': 'UPDATE cache SET used = (SELECT max(used) FROM cache) + 1',
             'delete_order_by': 'used, ts',
         },
         'LFU': {
             'additional_columns': ('used INT NOT NULL DEFAULT 0',),
             'additional_indexes': ('used, ts',),
-            'after_get_ok': "UPDATE cache SET used = used + 1",
+            'after_get_ok': 'UPDATE cache SET used = used + 1',
             'delete_order_by': 'used, ts',
         },
     }
@@ -93,7 +93,7 @@ class SQLiteStorage(CacheStorageBase):
             for p in ('filepath', 'maxsize', 'ttl')
         )
         return (
-            f"{self.__class__.__name__}"
+            f'{self.__class__.__name__}'
             f"({', '.join(f'{k}={repr(v)}' for k,v in params)})"
         )
 

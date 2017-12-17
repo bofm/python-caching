@@ -149,7 +149,7 @@ def ensure_index(db, table_name, columns, unique):
     columns = ', '.join(columns)
     unique = 'UNIQUE' if unique else ''
     query = (
-        f"SELECT * FROM SQLITE_MASTER "
+        f'SELECT * FROM SQLITE_MASTER '
         f"WHERE TYPE = 'index' AND tbl_name = '{table_name}'"
         f" AND sql LIKE '%{unique} INDEX % ON {table_name} ({columns})'"
     )
@@ -170,7 +170,7 @@ def test_schema_fifo():
 
     ensure_index(storage.db, 'cache', ['ts'], False)
     assert len(q(
-        "SELECT * FROM SQLITE_MASTER "
+        'SELECT * FROM SQLITE_MASTER '
         "WHERE TYPE = 'trigger' AND tbl_name = 'cache'",
     )) == 1
 
@@ -189,7 +189,7 @@ def test_schema_lru():
     ensure_index(storage.db, 'cache', ['ts'], False)
     ensure_index(storage.db, 'cache', ['used', 'ts'], False)
     assert len(q(
-        "SELECT * FROM SQLITE_MASTER "
+        'SELECT * FROM SQLITE_MASTER '
         "WHERE TYPE = 'trigger' AND tbl_name = 'cache'",
     )) == 1
 
@@ -208,6 +208,6 @@ def test_schema_lfu():
     ensure_index(storage.db, 'cache', ['ts'], False)
     ensure_index(storage.db, 'cache', ['used', 'ts'], False)
     assert len(q(
-        "SELECT * FROM SQLITE_MASTER "
+        'SELECT * FROM SQLITE_MASTER '
         "WHERE TYPE = 'trigger' AND tbl_name = 'cache'",
     )) == 1
