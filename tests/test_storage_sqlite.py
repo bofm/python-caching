@@ -120,6 +120,7 @@ def test_clear(storage):
 
 
 def test_remove(tmpdir):
+    tmpdir = str(tmpdir)
     assert os.listdir(tmpdir) == []
     filepath = f'{tmpdir}/cache'
     storage = SQLiteStorage(filepath=filepath, ttl=-1, maxsize=10)

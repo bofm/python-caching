@@ -170,6 +170,7 @@ def test_raises_if_closed(cache):
 
 
 def test_remove(tmpdir, cache):
+    tmpdir = str(tmpdir)
     cache.remove()
     filepath = f'{tmpdir}/cache'
     cache = Cache(filepath=filepath)
