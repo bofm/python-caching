@@ -45,7 +45,7 @@ class Cache:
         policy: str='FIFO',
         key: Callable=make_key,
         only_on_errors=False,
-        **kwargs,
+        **kwargs
     ):
         """
         Args:
