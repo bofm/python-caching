@@ -68,11 +68,12 @@ class SQLiteStorage(CacheStorageBase):
         self.nothing = object()
 
         if self.ttl > 0:
-            ttl_filter = f' AND ({self.SQLITE_TIMESTAMP} - ts) <= {self.ttl}'
+            ttl_filter = f'({self.SQLITE_TIMESTAMP} - ts) <= {self.ttl}'
         else:
-            ttl_filter = ''
+            ttl_filter = '1=1'
 
-        self.sql_select = f'SELECT value FROM cache WHERE key = ?{ttl_filter}'
+        self.sql_select = f'SELECT value FROM cache WHERE key = ? AND {ttl_filter}'
+        self.sql_select_kv = f'SELECT key, value FROM cache WHERE {ttl_filter} ORDER BY ts'
         self.sql_delete = 'DELETE FROM cache WHERE key = ?'
         self.sql_insert = (
             'INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)'
@@ -179,7 +180,7 @@ class SQLiteStorage(CacheStorageBase):
         self.init_db()
 
     def items(self):
-        cursor = self.db.execute('SELECT key, value FROM cache ORDER BY ts')
+        cursor = self.db.execute(self.sql_select_kv)
         try:
             yield from cursor
         finally:
