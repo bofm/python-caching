@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import os
 import sqlite3
 from contextlib import suppress
@@ -92,10 +93,8 @@ class SQLiteStorage(CacheStorageBase):
             (p, getattr(self, p))
             for p in ('filepath', 'maxsize', 'ttl')
         )
-        return (
-            f'{self.__class__.__name__}'
-            f"({', '.join(f'{k}={repr(v)}' for k,v in params)})"
-        )
+        param_str = ', '.join(f'{k}={repr(v)}' for k, v in params)
+        return f'{self.__class__.__name__}({param_str})'
 
     def __enter__(self):
         self.init_db()
@@ -152,11 +151,12 @@ class SQLiteStorage(CacheStorageBase):
             ''')
 
         with self.db as db:
+            addnl_col_str = ''.join(f"{c}, " for c in policy_stuff['additional_columns'])
             db.execute(f'''
                 CREATE TABLE IF NOT EXISTS cache (
                     key BINARY PRIMARY KEY,
                     ts REAL NOT NULL DEFAULT ({self.SQLITE_TIMESTAMP}),
-                    {''.join(f"{c}, " for c in policy_stuff['additional_columns'])}
+                    {addnl_col_str}
                     value BLOB NOT NULL
                 ) WITHOUT ROWID
             ''')

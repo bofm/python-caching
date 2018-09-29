@@ -55,9 +55,12 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
+    install_requires=['future-fstrings'],
+    setup_requires=['future-fstrings'],
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
 )

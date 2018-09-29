@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import pickle
 from collections import OrderedDict
 from functools import wraps
@@ -65,14 +66,14 @@ class Cache:
                 results only in case of the exceptions are raisd in the
                 decorated function.
         """
-        self.params = OrderedDict(
-            maxsize=maxsize,
-            ttl=ttl,
-            filepath=filepath,
-            policy=policy,
-            key=key,
-            only_on_errors=only_on_errors,
-            **kwargs,
+        self.params = OrderedDict([
+            ('maxsize', maxsize),
+            ('ttl', ttl),
+            ('filepath', filepath),
+            ('policy', policy),
+            ('key', key),
+            ('only_on_errors', only_on_errors)] +
+            list(kwargs.items())
         )
         self.only_on_errors = only_on_errors
         self.make_key = key
@@ -84,10 +85,8 @@ class Cache:
         )
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}"
-            f"({', '.join(f'{k}={repr(v)}' for k,v in self.params.items())})"
-        )
+        param_str = ', '.join(f'{k}={repr(v)}' for k, v in self.params.items())
+        return f'{self.__class__.__name__}({param_str})'
 
     def _decorator(self, fn):
         if not callable(fn):
